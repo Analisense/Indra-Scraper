@@ -11,7 +11,6 @@ import {
 import * as compression from 'compression';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
-import { PrismaClientExceptionFilter } from './common/filters/prisma-client-exception.filter.ts';
 import { ResponseTransformInterceptor } from './common/interceptors/response-transform.interceptor';
 
 async function bootstrap() {
@@ -30,7 +29,7 @@ async function bootstrap() {
   app.enableCors();
 
   // Starts listening for shutdown hooks
-  const { httpAdapter } = app.get(HttpAdapterHost);
+  // const { httpAdapter } = app.get(HttpAdapterHost);
   app.enableShutdownHooks();
 
   // Enable Auto Validation
@@ -45,7 +44,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseTransformInterceptor());
 
   // Global Filters
-  app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));
+  app.useGlobalFilters();
 
   // Config Service
   const configService = app.get(ConfigService);
@@ -61,7 +60,7 @@ async function bootstrap() {
     .build();
 
   const swaggerDocumentOptions: SwaggerDocumentOptions = {
-    operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
+    operationIdFactory: (_: string, methodKey: string) => methodKey,
   };
 
   const document = SwaggerModule.createDocument(
