@@ -19,10 +19,10 @@ import { NotFoundException } from '@nestjs/common/exceptions';
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  // @Post()
-  // create(@Body() createProductDto: CreateProductDto) {
-  // return this.productsService.create(createProductDto);
-  // }
+  @Post()
+  create(@Body() createProductDto: CreateProductDto) {
+    return this.productsService.create(createProductDto);
+  }
 
   @Get()
   async findAll() {
@@ -92,7 +92,9 @@ export class ProductsController {
         status,
       });
 
-      axios.get(`http://localhost:3000/scraper/products/${id}`).catch();
+      axios
+        .get(`http://localhost:3000/scraper/products/${id}`)
+        .catch((e: Error) => console.log(e.message));
     });
 
     return data;

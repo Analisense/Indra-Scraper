@@ -3,9 +3,9 @@ import { Schema, Document } from 'mongoose';
 export const PRODUCT = 'Product';
 
 export const ProductSchema = new Schema({
-  id: Number,
-  product_id: String,
-  prototype_id: String,
+  id: { type: Number, unique: true },
+  product_id: { type: String, unique: true },
+  prototype_id: { type: String, unique: true },
   image: String,
   title: String,
   type: String,
