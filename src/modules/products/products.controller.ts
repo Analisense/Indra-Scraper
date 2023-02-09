@@ -13,6 +13,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { load } from 'cheerio';
 import axios from 'axios';
 import { parseDocument } from 'htmlparser2';
+import { NotFoundException } from '@nestjs/common/exceptions';
 
 @Controller('products')
 export class ProductsController {
@@ -117,6 +118,9 @@ export class ProductsController {
     const $fs5 = $mt2.find('.fs-5');
 
     const product_id = $ps4.find('.fs-6 .fw-bold').text();
+    if (!product_id) {
+      throw new NotFoundException();
+    }
     const image = $stat.find('.col-md-3 img').attr('src');
     const [type, , year] = $ps4
       .find('.fs-6.text-muted')
