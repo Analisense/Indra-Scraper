@@ -1,3 +1,4 @@
+import { parseDocument } from 'htmlparser2';
 import {
   Controller,
   Get,
@@ -6,54 +7,57 @@ import {
   Patch,
   Param,
   Delete,
+  NotFoundException,
 } from '@nestjs/common';
-import { ProductsService } from './products.service';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import { PrototypesService } from './prototypes.service';
+import { CreatePrototypeDto } from './dto/create-prototype.dto';
+import { UpdatePrototypeDto } from './dto/update-prototype.dto';
+import axios from 'axios';
 import { load } from 'cheerio';
-import axios, { AxiosResponse } from 'axios';
-import { parseDocument } from 'htmlparser2';
-import { NotFoundException } from '@nestjs/common/exceptions';
+import { ProductsService } from '../products/products.service';
 
-@Controller('products')
-export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+@Controller('prototypes')
+export class PrototypesController {
+  constructor(
+    private readonly prototypesService: PrototypesService,
+    private readonly productsService: ProductsService,
+  ) {}
 
   @Post()
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
+  create(@Body() createPrototypeDto: CreatePrototypeDto) {
+    return this.prototypesService.create(createPrototypeDto);
   }
 
   @Get()
   async findAll() {
-    const { data: productPage } = await axios.get(
-      `https://indra.kemdikbud.go.id/Product?page=1`,
+    const { data: prototypePage } = await axios.get(
+      `https://indra.kemdikbud.go.id/Prototype?page=1`,
     );
-    const $ = load(parseDocument(productPage));
+    const $ = load(parseDocument(prototypePage));
     const dataPage = $('.col-md-7 .text-start small').text().split(' ');
     const lastPage = +dataPage[3];
     const dataPromise = [];
     for (let page = 1; page <= lastPage; page++) {
       if (page % 10 === 0)
-        await new Promise((resolve) => setTimeout(resolve, 15000));
-      dataPromise.push(this.getProduct(page));
+        await new Promise((resolve) => setTimeout(resolve, 20000));
+      dataPromise.push(this.getPrototype(page));
     }
     await Promise.all(dataPromise);
 
     return 'selesai';
   }
 
-  async getProduct(page: number) {
+  async getPrototype(page: number) {
     console.log(`Scraping page: ${page}`);
-    const { data: productPage } = await axios.get(
-      `https://indra.kemdikbud.go.id/Product?page=${page}`,
+    const { data: prototypePage } = await axios.get(
+      `https://indra.kemdikbud.go.id/Prototype?page=${page}`,
     );
-    const $ = load(parseDocument(productPage));
+    const $ = load(parseDocument(prototypePage));
     const data = [];
     $('.row .col-md .item').map(async (_, e) => {
       const $ps4 = $(e).find('.ps-4');
       const id = +$ps4.find('a').attr('href').split('/').pop();
-      const dataDetail = await this.getDetailProduct(+id);
+      const dataDetail = await this.getDetailPrototype(+id);
       data.push(dataDetail);
     });
 
@@ -62,15 +66,15 @@ export class ProductsController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    return this.getDetailProduct(+id);
+    return this.getDetailPrototype(+id);
   }
 
-  async getDetailProduct(id: number) {
-    const { data: productPageDetail } = await axios.get(
-      `https://indra.kemdikbud.go.id/Product/detail/${id}`,
+  async getDetailPrototype(id: number) {
+    const { data: prototypePageDetail } = await axios.get(
+      `https://indra.kemdikbud.go.id/Prototype/detail/${id}`,
     );
 
-    const $ = load(parseDocument(productPageDetail));
+    const $ = load(parseDocument(prototypePageDetail));
 
     const $banner = $('.banner');
     const $stat = $banner.find('.stat .row');
@@ -83,8 +87,8 @@ export class ProductsController {
     const $mt2 = $ps4.find('.mt-2');
     const $fs5 = $mt2.find('.fs-5');
 
-    const product_id = $ps4.find('.fs-6 .fw-bold').text();
-    if (!product_id) {
+    const prototype_id = $ps4.find('.fs-6 .fw-bold').text();
+    if (!prototype_id) {
       throw new NotFoundException();
     }
     const image = $stat.find('.col-md-3 img').attr('src');
@@ -134,7 +138,7 @@ export class ProductsController {
 
     const data = {
       id: +id,
-      product_id,
+      prototype_id,
       image,
       title,
       type: type.toLowerCase(),
@@ -147,8 +151,8 @@ export class ProductsController {
       research,
     };
 
-    const product = await this.productsService.findOne(+id);
-    if (product) {
+    const prototype = await this.productsService.findOne(+id);
+    if (prototype) {
       await this.productsService.update(+id, data);
     } else {
       await this.productsService.create(data);
@@ -157,13 +161,16 @@ export class ProductsController {
     return data;
   }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-  //   return this.productsService.update(+id, updateProductDto);
-  // }
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @Body() updatePrototypeDto: UpdatePrototypeDto,
+  ) {
+    return this.prototypesService.update(+id, updatePrototypeDto);
+  }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.productsService.remove(+id);
+    return this.prototypesService.remove(+id);
   }
 }

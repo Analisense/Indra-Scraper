@@ -24,7 +24,7 @@ export class CreateProductDto {
   year: string;
   category: string[];
   tkt_level: number;
-  status: string;
+  is_validated: boolean;
 
   @Type(() => Research)
   research: Research;

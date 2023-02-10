@@ -5,6 +5,7 @@ import { envValidationSchema } from './config/env-validation.schema';
 import { AffiliationsModule } from './modules/affiliations/affiliations.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ProductsModule } from './modules/products/products.module';
+import { PrototypesModule } from './modules/prototypes/prototypes.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ProductsModule } from './modules/products/products.module';
     }),
     AffiliationsModule,
     ProductsModule,
+    PrototypesModule,
   ],
   controllers: [AppController],
 })

@@ -4,8 +4,8 @@ export const PRODUCT = 'Product';
 
 export const ProductSchema = new Schema({
   id: { type: Number, unique: true },
-  product_id: { type: String, unique: true },
-  prototype_id: { type: String, unique: true },
+  product_id: String,
+  prototype_id: String,
   image: String,
   title: String,
   type: String,
@@ -14,7 +14,7 @@ export const ProductSchema = new Schema({
   year: String,
   category: Array,
   tkt_level: Number,
-  status: String,
+  is_validated: Boolean,
   research: {
     description: String,
     participant: [{ name: String, role: String }],
@@ -35,6 +35,7 @@ export interface Product extends Document {
   category: string[];
   tkt_level: number;
   status: string;
+  is_validated: boolean;
   research: {
     description: string;
     participant: { name: string; role: string }[];
