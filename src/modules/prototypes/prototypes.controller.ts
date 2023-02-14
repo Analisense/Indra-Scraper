@@ -7,7 +7,7 @@ import {
   Patch,
   Param,
   Delete,
-  NotFoundException,
+  HttpStatus,
 } from '@nestjs/common';
 import { PrototypesService } from './prototypes.service';
 import { CreatePrototypeDto } from './dto/create-prototype.dto';
@@ -15,6 +15,7 @@ import { UpdatePrototypeDto } from './dto/update-prototype.dto';
 import axios from 'axios';
 import { load } from 'cheerio';
 import { ProductsService } from '../products/products.service';
+import { NotFoundException, HttpException } from '@nestjs/common/exceptions';
 
 @Controller('prototypes')
 export class PrototypesController {
@@ -30,21 +31,25 @@ export class PrototypesController {
 
   @Get()
   async findAll() {
-    const { data: prototypePage } = await axios.get(
-      `https://indra.kemdikbud.go.id/Prototype?page=1`,
-    );
-    const $ = load(parseDocument(prototypePage));
-    const dataPage = $('.col-md-7 .text-start small').text().split(' ');
-    const lastPage = +dataPage[3];
-    const dataPromise = [];
-    for (let page = 1; page <= lastPage; page++) {
-      if (page % 10 === 0)
-        await new Promise((resolve) => setTimeout(resolve, 20000));
-      dataPromise.push(this.getPrototype(page));
-    }
-    await Promise.all(dataPromise);
+    try {
+      const { data: prototypePage } = await axios.get(
+        `https://indra.kemdikbud.go.id/Prototype?page=1`,
+      );
+      const $ = load(parseDocument(prototypePage));
+      const dataPage = $('.col-md-7 .text-start small').text().split(' ');
+      const lastPage = +dataPage[3];
+      const dataPromise = [];
+      for (let page = 1; page <= lastPage; page++) {
+        if (page % 10 === 0)
+          await new Promise((resolve) => setTimeout(resolve, 5 * 1000));
+        dataPromise.push(this.getPrototype(page));
+      }
+      await Promise.all(dataPromise);
 
-    return 'selesai';
+      return 'selesai';
+    } catch (e) {
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+    }
   }
 
   async getPrototype(page: number) {
@@ -53,20 +58,27 @@ export class PrototypesController {
       `https://indra.kemdikbud.go.id/Prototype?page=${page}`,
     );
     const $ = load(parseDocument(prototypePage));
-    const data = [];
-    $('.row .col-md .item').map(async (_, e) => {
-      const $ps4 = $(e).find('.ps-4');
-      const id = +$ps4.find('a').attr('href').split('/').pop();
-      const dataDetail = await this.getDetailPrototype(+id);
-      data.push(dataDetail);
-    });
 
-    return data;
+    return [].concat(
+      ...(await Promise.all(
+        $('.row .col-md .item')
+          .map(async (_, e) => {
+            const $ps4 = $(e).find('.ps-4');
+            const id = +$ps4.find('a').attr('href').split('/').pop();
+            return await this.getDetailPrototype(+id);
+          })
+          .toArray(),
+      )),
+    );
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    return this.getDetailPrototype(+id);
+    try {
+      return this.getDetailPrototype(+id);
+    } catch (e) {
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+    }
   }
 
   async getDetailPrototype(id: number) {
@@ -87,8 +99,8 @@ export class PrototypesController {
     const $mt2 = $ps4.find('.mt-2');
     const $fs5 = $mt2.find('.fs-5');
 
-    const prototype_id = $ps4.find('.fs-6 .fw-bold').text();
-    if (!prototype_id) {
+    const prototypeId = $ps4.find('.fs-6 .fw-bold').text();
+    if (!prototypeId) {
       throw new NotFoundException();
     }
     const image = $stat.find('.col-md-3 img').attr('src');
@@ -104,7 +116,7 @@ export class PrototypesController {
       .trim();
     const title = $ps4.find('a').text().trim();
     const category = $fs5.find('.me-2').text().split('/');
-    const tkt_level = +$fs5.find('.badge').text().split(':').pop().trim();
+    const tktLevel = +$fs5.find('.badge').text().split(':').pop().trim();
     const status = $mt2
       .find('.fs-6')
       .text()
@@ -138,15 +150,15 @@ export class PrototypesController {
 
     const data = {
       id: +id,
-      prototype_id,
+      prototypeId,
       image,
       title,
       type: type.toLowerCase(),
       category,
       submitter,
       year: year.split(' ').at(0),
-      tkt_level,
-      is_validated: status === 'Validated',
+      tktLevel,
+      isValidated: status === 'Validated',
       description,
       research,
     };

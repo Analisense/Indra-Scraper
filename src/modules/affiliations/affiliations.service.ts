@@ -3,21 +3,18 @@ import { CreateAffiliationDto } from './dto/create-affiliation.dto';
 import { UpdateAffiliationDto } from './dto/update-affiliation.dto';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { AFFILIATION, Affiliation } from './model/affiliations.model';
+import { Affiliation, AffiliationDocument } from './model/affiliations.model';
 
 @Injectable()
 export class AffiliationsService {
   constructor(
-    @InjectModel(AFFILIATION)
-    private readonly affiliationModel: Model<Affiliation>,
+    @InjectModel(Affiliation.name)
+    private readonly affiliationModel: Model<AffiliationDocument>,
   ) {}
 
   async create(createAffiliationDto: CreateAffiliationDto) {
-    const affiliation = new this.affiliationModel({
-      title: 'tes',
-    });
-    await affiliation.save();
-    return 'This action adds a new affiliation';
+    const affiliation = new this.affiliationModel(createAffiliationDto);
+    return await affiliation.save();
   }
 
   findAll() {
@@ -25,11 +22,11 @@ export class AffiliationsService {
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} affiliation`;
+    return this.affiliationModel.findOne({ id });
   }
 
-  update(id: number, updateAffiliationDto: UpdateAffiliationDto) {
-    return `This action updates a #${id} affiliation`;
+  update(id: number, updateAffiliationDto: CreateAffiliationDto) {
+    return this.affiliationModel.updateOne({ id }, updateAffiliationDto);
   }
 
   remove(id: number) {

@@ -1,44 +1,54 @@
-import { Schema, Document } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument } from 'mongoose';
 
-export const PRODUCT = 'Product';
+export type ProductDocument = HydratedDocument<Product>;
 
-export const ProductSchema = new Schema({
-  id: { type: Number, unique: true },
-  product_id: String,
-  prototype_id: String,
-  image: String,
-  title: String,
-  type: String,
-  submitter: String,
-  description: String,
-  year: String,
-  category: Array,
-  tkt_level: Number,
-  is_validated: Boolean,
-  research: {
-    description: String,
-    participant: [{ name: String, role: String }],
-    attachment: Array,
-  },
-});
-
-export interface Product extends Document {
-  id: number;
-  product_id: string;
-  prototype_id: string;
-  image: string;
-  title: string;
-  type: string;
-  submitter: string;
-  description: string;
-  year: string;
-  category: string[];
-  tkt_level: number;
-  status: string;
-  is_validated: boolean;
-  research: {
-    description: string;
-    participant: { name: string; role: string }[];
-    attachment: string[];
-  };
+export class Participant {
+  @Prop()
+  name: string;
+  @Prop()
+  role: string;
 }
+
+export class Research {
+  @Prop()
+  description: string;
+  @Prop({ type: [Participant] })
+  participant: Participant[];
+  @Prop()
+  attachment: string[];
+}
+
+@Schema()
+export class Product {
+  @Prop({ type: Number, unique: true })
+  id: number;
+  @Prop()
+  productId: string;
+  @Prop()
+  prototypeId: string;
+  @Prop()
+  image: string;
+  @Prop()
+  title: string;
+  @Prop({ type: String, enum: ['prototype', 'product'] })
+  type: string;
+  @Prop()
+  submitter: string;
+  @Prop()
+  description: string;
+  @Prop()
+  year: string;
+  @Prop({ type: [String] })
+  category: string[];
+  @Prop({ type: Number })
+  tktLevel: number;
+  @Prop()
+  status: string;
+  @Prop({ type: Boolean })
+  isValidated: boolean;
+  @Prop({ type: Research })
+  research: Research;
+}
+
+export const ProductSchema = SchemaFactory.createForClass(Product);

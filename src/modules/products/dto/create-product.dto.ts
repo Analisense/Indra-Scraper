@@ -14,8 +14,8 @@ export class Research {
 
 export class CreateProductDto {
   id: number;
-  product_id?: string;
-  prototype_id?: string;
+  productId?: string;
+  prototypeId?: string;
   image: string;
   title: string;
   submitter?: string;
@@ -23,8 +23,8 @@ export class CreateProductDto {
   type: string;
   year: string;
   category: string[];
-  tkt_level: number;
-  is_validated: boolean;
+  tktLevel: number;
+  isValidated: boolean;
 
   @Type(() => Research)
   research: Research;
