@@ -6,6 +6,7 @@ import { AffiliationsModule } from './modules/affiliations/affiliations.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ProductsModule } from './modules/products/products.module';
 import { PrototypesModule } from './modules/prototypes/prototypes.module';
+import { ScrapingModule } from './modules/scraping/scraping.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { PrototypesModule } from './modules/prototypes/prototypes.module';
     AffiliationsModule,
     ProductsModule,
     PrototypesModule,
+    ScrapingModule,
   ],
   controllers: [AppController],
 })

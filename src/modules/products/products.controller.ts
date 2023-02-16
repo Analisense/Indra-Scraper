@@ -27,6 +27,7 @@ export class ProductsController {
   @Get()
   async findAll() {
     try {
+      console.log('Scraping dimulai');
       const { data: productPage } = await axios.get(
         `https://indra.kemdikbud.go.id/Product?page=1`,
       );
@@ -35,14 +36,16 @@ export class ProductsController {
       const lastPage = +dataPage[3];
       const dataPromise = [];
       for (let page = 1; page <= lastPage; page++) {
-        if (page % 10 === 0)
+        if (page > 1)
           await new Promise((resolve) => setTimeout(resolve, 5 * 1000));
         dataPromise.push(this.getProduct(page));
       }
       await Promise.all(dataPromise);
 
+      console.log('Scraping selesai');
       return 'selesai';
     } catch (e) {
+      console.log('Scraping error');
       throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
@@ -54,16 +57,17 @@ export class ProductsController {
     );
     const $ = load(parseDocument(productPage));
 
-    return [].concat(
-      ...(await Promise.all(
-        $('.row .col-md .item')
-          .map(async (_, e) => {
-            const id = $(e).find('.ps-4 a').attr('href').split('/').pop();
-            return await this.getDetailProduct(+id);
-          })
-          .toArray(),
-      )),
+    const product = await Promise.all(
+      $('.row .col-md .item')
+        .map(async (_, e) => {
+          const id = $(e).find('.ps-4 a').attr('href').split('/').pop();
+          return await this.getDetailProduct(+id);
+        })
+        .toArray(),
     );
+
+    console.log(`Success Scraping page: ${page}`);
+    return [].concat(...product);
   }
 
   @Get(':id')
@@ -76,6 +80,7 @@ export class ProductsController {
   }
 
   async getDetailProduct(id: number) {
+    console.log(`Scraping id: ${id}`);
     const { data: productPageDetail } = await axios.get(
       `https://indra.kemdikbud.go.id/Product/detail/${id}`,
     );
@@ -164,6 +169,7 @@ export class ProductsController {
       await this.productsService.create(data);
     }
 
+    console.log(`Success Scraping id: ${id}`);
     return data;
   }
 

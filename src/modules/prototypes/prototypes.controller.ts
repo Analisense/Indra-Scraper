@@ -32,6 +32,7 @@ export class PrototypesController {
   @Get()
   async findAll() {
     try {
+      console.log('Scraping dimulai');
       const { data: prototypePage } = await axios.get(
         `https://indra.kemdikbud.go.id/Prototype?page=1`,
       );
@@ -46,8 +47,10 @@ export class PrototypesController {
       }
       await Promise.all(dataPromise);
 
+      console.log('Scraping selesai');
       return 'selesai';
     } catch (e) {
+      console.log('Scraping error');
       throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
@@ -59,17 +62,18 @@ export class PrototypesController {
     );
     const $ = load(parseDocument(prototypePage));
 
-    return [].concat(
-      ...(await Promise.all(
-        $('.row .col-md .item')
-          .map(async (_, e) => {
-            const $ps4 = $(e).find('.ps-4');
-            const id = +$ps4.find('a').attr('href').split('/').pop();
-            return await this.getDetailPrototype(+id);
-          })
-          .toArray(),
-      )),
+    const prototype = await Promise.all(
+      $('.row .col-md .item')
+        .map(async (_, e) => {
+          const $ps4 = $(e).find('.ps-4');
+          const id = +$ps4.find('a').attr('href').split('/').pop();
+          return await this.getDetailPrototype(+id);
+        })
+        .toArray(),
     );
+
+    console.log(`Success Scraping page: ${page}`);
+    return [].concat(...prototype);
   }
 
   @Get(':id')
@@ -82,6 +86,7 @@ export class PrototypesController {
   }
 
   async getDetailPrototype(id: number) {
+    console.log(`Scraping id: ${id}`);
     const { data: prototypePageDetail } = await axios.get(
       `https://indra.kemdikbud.go.id/Prototype/detail/${id}`,
     );
@@ -170,6 +175,7 @@ export class PrototypesController {
       await this.productsService.create(data);
     }
 
+    console.log(`Success Scraping id: ${id}`);
     return data;
   }
 

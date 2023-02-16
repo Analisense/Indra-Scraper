@@ -32,6 +32,7 @@ export class AffiliationsController {
   @Get()
   async findAll() {
     try {
+      console.log('Scraping dimulai');
       const { data: affiliationPage } = await axios.get(
         `https://indra.kemdikbud.go.id/Affiliations`,
       );
@@ -43,13 +44,15 @@ export class AffiliationsController {
       const dataPromise = [];
       for (let page = 1; page <= lastPage; page++) {
         if (page % 10 === 0)
-          await new Promise((resolve) => setTimeout(resolve, 20 * 1000));
+          await new Promise((resolve) => setTimeout(resolve, 10 * 60 * 1000));
         dataPromise.push(this.getAffiliation(page));
       }
       await Promise.all(dataPromise);
 
+      console.log('Scraping selesai');
       return 'selesai';
     } catch (e) {
+      console.log('Scraping error');
       throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
@@ -61,32 +64,33 @@ export class AffiliationsController {
     );
     const $ = load(parseDocument(affiliationPage));
 
-    return [].concat(
-      ...(await Promise.all(
-        $('.row .col-md .item')
-          .map(async (_, e) => {
-            const id = $(e).find('.ps-4 a').attr('href').split('/').pop();
-            return await this.getDetailAffiliation(+id);
-          })
-          .toArray(),
-      )),
+    const affiliation = await Promise.all(
+      $('.row .col-md .item')
+        .map(async (_, e) => {
+          const id = $(e).find('.ps-4 a').attr('href').split('/').pop();
+          return await this.getDetailAffiliation(+id);
+        })
+        .toArray(),
     );
+
+    console.log(`Success Scraping page: ${page}`);
+    return [].concat(...affiliation);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string) {
     try {
-      return this.getDetailAffiliation(+id);
+      return await this.getDetailAffiliation(+id);
     } catch (e) {
       throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
 
   async getDetailAffiliation(id: number) {
+    console.log(`Scraping id: ${id}`);
     const { data: productPageDetail } = await axios.get(
       `https://indra.kemdikbud.go.id/Affiliations/detail/${id}`,
     );
-
     const $ = load(parseDocument(productPageDetail));
 
     const $stat = $('.stat .row');
@@ -105,6 +109,7 @@ export class AffiliationsController {
     const lastPage = +dataPage[3];
     const dataPromise = [];
     for (let page = 1; page <= lastPage; page++) {
+      await new Promise((resolve) => setTimeout(resolve, 3 * 1000));
       dataPromise.push(this.getAllProductId(id, page));
     }
     const products = [].concat(...(await Promise.all(dataPromise)));
@@ -118,7 +123,7 @@ export class AffiliationsController {
       address: address.trim(),
       products,
     };
-    console.log(data);
+
     const affiliation = await this.affiliationsService.findOne(id);
     if (affiliation) {
       await this.affiliationsService.update(id, data);
@@ -126,11 +131,12 @@ export class AffiliationsController {
       await this.affiliationsService.create(data);
     }
 
+    console.log(`Success Scraping id: ${id}`);
     return data;
   }
 
   async getAllProductId(id: number, page: number) {
-    console.log(`Scraping page: ${page}`);
+    console.log(`Scraping id: ${id} - page: ${page}`);
     const { data: productPageDetail } = await axios.get(
       `https://indra.kemdikbud.go.id/Affiliations/detail/${id}?page=${page}`,
     );
@@ -146,7 +152,7 @@ export class AffiliationsController {
           .toArray(),
       )),
     );
-
+    console.log(`Success Scraping id: ${id} - page: ${page}`);
     return products;
   }
 
