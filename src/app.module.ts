@@ -7,6 +7,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ProductsModule } from './modules/products/products.module';
 import { PrototypesModule } from './modules/prototypes/prototypes.module';
 import { ScrapingModule } from './modules/scraping/scraping.module';
+import { AuthorsModule } from './modules/authors/authors.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ScrapingModule } from './modules/scraping/scraping.module';
     ProductsModule,
     PrototypesModule,
     ScrapingModule,
+    AuthorsModule,
   ],
   controllers: [AppController],
 })
